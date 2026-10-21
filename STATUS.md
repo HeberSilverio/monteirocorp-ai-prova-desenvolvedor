@@ -3,7 +3,7 @@
 > Preencha este arquivo na branch `main` antes de entregar.
 
 **Nome:** Heber Silverio
-**Tempo total gasto (aprox.):** 1h24m03s (registrado com Clockify)
+**Tempo total gasto (aprox.):** 2h04m34s (registrado com Clockify)
 
 ## Ordem em que trabalhei
 
@@ -14,12 +14,16 @@ de dados entre empresas, com impacto direto na segurança/LGPD. Além disso, é 
 independe das demais: dá para validá-la e fechar a branch sem depender de
 nenhuma outra entrega.
 
-Depois dela pretendo seguir a ordem de impacto para o cliente: **Tarefa 1**
-(tela inutilizável para o Grupo Aurora), **Tarefa 2** (número financeiro
-errado — R$ 4.501,00 em vez de R$ 3.400,50), **Tarefa 4** (prazo em dias
-úteis, que depende de escolher e consultar a API de feriados) e por fim
-**Tarefa 5** (exportação para o Excel, que depende da lista final exibida na
-tela para fazer sentido).
+Em seguida fiz a **Tarefa 1**, a mais visível para o cliente: a tela de tarefas
+ficava vazia justamente para quem usaria mais o sistema (o Grupo Aurora). Como
+ela mexe na mesma função que a hierarquia do banco, resolvi fazer a regra de
+"empresa + descendentes" **nos dois lugares** de forma consistente, para que
+tela e banco não discordem.
+
+Depois dela sigo por impacto: **Tarefa 2** (número financeiro errado — R$ 4.501,00
+em vez de R$ 3.400,50), **Tarefa 4** (prazo em dias úteis, que depende de
+escolher e consultar a API de feriados) e por fim **Tarefa 5** (exportação para
+o Excel, que depende da lista final exibida na tela para fazer sentido).
 
 ## Ferramentas utilizadas
 
@@ -27,21 +31,64 @@ tela para fazer sentido).
 - **Ferramenta de IA:** Cline (extensão do VS Code).
 - **Modelo utilizado:** `cline:cline-free/nemotron-3.5-super-vl` e o modelo
   pago `kimi-k3` (Moonshot AI).
-- **Gerenciamento de tempo:** Clockify, com duas entradas registradas:
+- **Gerenciamento de tempo:** Clockify, com três entradas registradas:
   - Prova prática - monteirocorp-ai (Preparação e diagnóstico) — 00:31:02
   - Prova prática - monteirocorp-ai (Tarefa 3 — Segurança) — 00:53:01
+  - Prova prática - monteirocorp-ai (Tarefa 1 — Listagem) — 00:40:31
 - Todo o histórico das conversas com a IA está sendo salvo na pasta `sessoes/`.
 
 ## Tarefa 1 — Tela de tarefas
 
-- **Situação:** não comecei
-- **Qual era o problema:** a tela não mostra nada ao escolher o Grupo Aurora
-  (nenhuma tarefa pertence diretamente à empresa 1) e o filtro de período
-  exclui os dias das pontas (usa `>` e `<` em vez de `>=` e `<=`), então
-  tarefas criadas exatamente no primeiro ou no último dia do filtro somem.
-  Diagnóstico já feito na etapa de preparação; a correção é em `src/tarefas.js`.
+- **Situação:** pronta
+- **Qual era o problema:** eram dois defeitos na mesma função `listarTarefas`
+  (`src/tarefas.js`):
+  1. **Tela vazia no Grupo Aurora.** O filtro era
+     `.filter((t) => t.empresa_id === empresaId)` — igualdade **exata**. Como
+     a empresa 1 (Grupo Aurora) é apenas a raiz da árvore e **não tem tarefa
+     própria** em `data/tarefas.json`, o resultado era sempre `[]` e a tela
+     mostrava "Nenhuma tarefa no período". A regra do README (seção 2) é
+     "a empresa **e todas as empresas abaixo dela**", que nunca tinha sido
+     implementada no frontend.
+  2. **Tarefa do dia da ponta sumia.** O filtro de período usava
+     `t.criada_em > de && t.criada_em < ate`, com operadores **estritos**:
+     uma tarefa criada exatamente em `de` ou em `ate` era descartada. O
+     enunciado pede para incluir **os dois dias das pontas**.
+  **Correção:** mantive o nome e a assinatura exatos da função
+  (`listarTarefas({tarefas, empresas, empresaId, de, ate})`) e criei dois
+  helpers: `idsVisiveis()` percorre a árvore por `pai_id` (DFS com pilha,
+  usando o conjunto de visitados como guarda, para uma hierarquia cíclica não
+  gerar laço infinito) e devolve o conjunto `{empresa} ∪ descendentes`; e
+  `soData()` normaliza as datas para `YYYY-MM-DD` (corta a hora, se houver).
+  A comparação de período passou a descartar só o que está **fora** dos
+  limites (`< de` ou `> ate`), tornando as pontas inclusivas. A ordenação por
+  `criada_em` e o comportamento da tela foram preservados, e o `src/App.jsx`
+  não precisou ser alterado. Nenhuma tabela, coluna ou dado foi tocado.
 - **Como provei que funciona:**
-- **PR:**
+  - **Testes automatizados** em `test/tarefas.test.js`: o teste que já
+    existia foi **mantido intacto** e segue passando, e acrescentei 18 casos
+    novos. `npm test` → **2 arquivos, 20 testes, 20 passando** (antes eram
+    1 teste).
+  - **Hierarquia**, verificada com os dados reais do projeto:
+
+| Empresa escolhida | Empresas visíveis | Ids das tarefas | OK |
+|---|---|---|---|
+| 1 — Grupo Aurora | 1, 2, 3, 4 (nunca a 5) | 101,102,103,104,105,106,108,109,110,112,113,114,115 (13) | ✔ |
+| 2 — Aurora Serviços | 2 e 4 | 101,102,103,104,108,109,112,113,115 | ✔ |
+| 3 — Vértice Finanças | só a 3 | 105,106,110,114 | ✔ |
+| 4 — Aurora Campo | só a 4 | 103,104,109,113 | ✔ |
+| 5 — Outra Empresa S.A. | só a 5 | 107,111 | ✔ |
+
+  - **Datas inclusivas:** a tarefa **101** (2026-09-01) aparece quando o
+    período começa em 2026-09-01; a tarefa **108** (2026-09-30) aparece
+    quando o período termina em 2026-09-30; a 101 e a 108 ficam de fora
+    quando o período é 2026-09-05..2026-09-20.
+  - **Ordenação:** conferida par a par — o Grupo Aurora no período padrão
+    devolve 13 tarefas em ordem crescente de `criada_em`.
+  - **Comportamento real da tela:** `npm run dev` sobe sem erro (Vite pronto,
+    HTTP 200) e, com o Grupo Aurora selecionado e o período padrão
+    (01/09 a 31/10), a listagem passa de **0 linhas para 13**, sem nenhuma
+    tarefa da Outra Empresa S.A. (ids 107 e 111).
+- **PR:** a ser criada — branch `tarefa-1` → `main`, **aberta e sem merge**.
 
 ## Tarefa 2 — Relatório de vendas
 
@@ -136,14 +183,14 @@ tela para fazer sentido).
 
 ## Encontrei também
 
-- **A tela do frontend não aplica a hierarquia.** `src/tarefas.js` filtra com
-  `t.empresa_id === empresaId` (comparação exata). Ou seja, mesmo com o banco
-  corrigido, escolher "Grupo Aurora" na tela continua vazio e a empresa 2 não
-  enxerga as tarefas da 4. **Deixei essa correção para a Tarefa 1**, que já
-  vai mexer exatamente nessa função: assim evito conflito de merge entre as
-  branches e misturo os escopos das tarefas. O ponto a replanejar é fazer o
-  `listarTarefas` usar a **mesma** lógica de descendentes que está agora nas
-  políticas RLS, para que a tela e o banco concordem.
+- **A hierarquia do banco e a da tela estavam em desacordo.** O RLS (Tarefa 3)
+  e o `listarTarefas` (Tarefa 1) implementam a mesma regra de "empresa +
+  descendentes", mas em lugares diferentes. Resolvi os dois com a mesma
+  semântica e validei que produzem o **mesmo conjunto** de empresas visíveis
+  nos dados atuais (1→{1,2,3,4}, 2→{2,4}, 3→{3}, 4→{4}, 5→{5}). Ainda assim
+  são duas implementações da mesma regra: uma mudança futura na árvore
+  (`data/empresas.json`) precisa ser refletida nas duas. **Um teste de
+  paridade** entre o RLS e o frontend seria o próximo passo natural.
 - **A tabela `empresas` continua sem RLS.** É intencional: ela guarda só a
   estrutura de navegação (a árvore), não dados de tarefas, e o CTE recursivo
   das políticas precisa consultá-la. Vale registrar que qualquer papel com
@@ -162,21 +209,29 @@ tela para fazer sentido).
   injeção de fórmula no Excel** que já existe nos dados. Além de ser escapada
   na exportação (Tarefa 5), vale a pena gerar títulos assim de forma segura
   na origem.
+- **A ordenação por `criada_em` é textual e estável apenas dentro do mesmo
+  dia.** Duas tarefas criadas no mesmo dia mantêm a ordem do arquivo (o
+  `Array.prototype.sort` é estável no V8). Se a tela precisar de uma ordem
+  dentro do dia (por exemplo, por hora de criação), faltaria o campo de hora
+  em `criada_em` — hoje ele só tem data.
 
 ## O que ficou faltando / o que eu faria com mais tempo
 
-- As Tarefas 1, 2, 4 e 5 ainda não foram implementadas — só foram
+- As Tarefas 2, 4 e 5 ainda não foram implementadas — só foram
   **diagnosticadas** com profundidade na etapa de preparação (causa-raiz
   identificada em cada arquivo, cenários de teste e números esperados já
   levantados, inclusive o cálculo do R$ 3.400,50 da Tarefa 2), mas o código
   ainda não foi alterado para elas.
-- Com mais tempo eu faria, nesta ordem: Tarefa 1 (com a hierarquia no
-  frontend, alinhada ao banco), Tarefa 2 (fuso de Brasília + deduplicação),
-  Tarefa 4 (API de feriados + coluna de SLA) e Tarefa 5 (CSV com `;`, escape
-  correto, BOM UTF-8 e botão na tela).
+- Com mais tempo eu faria, nesta ordem: Tarefa 2 (fuso de Brasília +
+  deduplicação), Tarefa 4 (API de feriados + coluna de SLA) e Tarefa 5 (CSV
+  com `;`, escape correto, BOM UTF-8 e botão na tela).
 - Eu também centralizaria a regra de descendentes em um único lugar
   compartilhado entre o SQL e o frontend, em vez de repetir a regra em dois
   lugares, reduzindo o risco de as duas camadas divergirem.
 - Faltou também um teste de integração que suba o servidor real com a sessão
   HTTP e verifique o `app.empresa_id` no caminho de produção (hoje a cobertura
   é sobre o script `npm run db` e sobre o PGlite direto).
+- Na Tarefa 1 eu validei a listagem chamando a função com os mesmos
+  parâmetros que o `App.jsx` usa e subi o Vite para confirmar que o app
+  renderiza, mas não fiz um teste de interface que simulasse a troca do
+  seletor de empresa — a cobertura é da função, não do componente.
