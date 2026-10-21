@@ -3,7 +3,7 @@
 > Preencha este arquivo na branch `main` antes de entregar.
 
 **Nome:** Heber Silverio
-**Tempo total gasto (aprox.):** 2h04m34s (registrado com Clockify)
+**Tempo total gasto (aprox.):** 2h15m36s (registrado com Clockify)
 
 ## Ordem em que trabalhei
 
@@ -20,8 +20,9 @@ ela mexe na mesma função que a hierarquia do banco, resolvi fazer a regra de
 "empresa + descendentes" **nos dois lugares** de forma consistente, para que
 tela e banco não discordem.
 
-Depois dela sigo por impacto: **Tarefa 2** (número financeiro errado — R$ 4.501,00
-em vez de R$ 3.400,50), **Tarefa 4** (prazo em dias úteis, que depende de
+Depois dela segui por impacto: **Tarefa 2** (número financeiro errado — R$ 4.501,00
+em vez de R$ 3.400,50), que já está **concluída e validada** na branch
+`tarefa-2`; depois seguem **Tarefa 4** (prazo em dias úteis, que depende de
 escolher e consultar a API de feriados) e por fim **Tarefa 5** (exportação para
 o Excel, que depende da lista final exibida na tela para fazer sentido).
 
@@ -31,10 +32,11 @@ o Excel, que depende da lista final exibida na tela para fazer sentido).
 - **Ferramenta de IA:** Cline (extensão do VS Code).
 - **Modelo utilizado:** `cline:cline-free/nemotron-3.5-super-vl` e o modelo
   pago `kimi-k3` (Moonshot AI).
-- **Gerenciamento de tempo:** Clockify, com três entradas registradas:
+- **Gerenciamento de tempo:** Clockify, com quatro entradas registradas:
   - Prova prática - monteirocorp-ai (Preparação e diagnóstico) — 00:31:02
   - Prova prática - monteirocorp-ai (Tarefa 3 — Segurança) — 00:53:01
   - Prova prática - monteirocorp-ai (Tarefa 1 — Listagem) — 00:40:31
+  - Prova prática - monteirocorp-ai (Tarefa 2 — Relatório) - 00:17:21
 - Todo o histórico das conversas com a IA está sendo salvo na pasta `sessoes/`.
 
 ## Tarefa 1 — Tela de tarefas
@@ -92,16 +94,67 @@ o Excel, que depende da lista final exibida na tela para fazer sentido).
 
 ## Tarefa 2 — Relatório de vendas
 
-- **Situação:** não comecei
-- **Qual era o problema:** o relatório filtra as vendas comparando
-  `criada_em.slice(0, 10)` com o dia, ou seja, usa a data em **UTC** em vez do
-  horário de Brasília, e também soma **vendas duplicadas** (o arquivo
-  `data/vendas.json` traz registros repetidos por falha da sincronização).
-  Cálculo feito na etapa de preparação: o código atual produz exatamente
-  R$ 4.501,00 para 2026-10-01, enquanto o valor correto é R$ 3.400,50. Não
-  deve-se editar `data/vendas.json` — a correção é no código.
+- **Situação:** concluída e validada pelo relatório (branch `tarefa-2`)
+- **Qual era o problema:** eram **três defeitos** no mesmo cálculo, e não só um:
+  1. **Fuso horário.** O filtro comparava `criada_em.slice(0, 10)` com o dia, ou
+     seja, usava a data em **UTC** em vez do horário de Brasília (UTC-3). Uma
+     venda criada perto da meia-noite caía no dia errado: `V-0995`
+     (2026-10-02T01:30Z) é **01/10 22:30 em Brasília** e estava fora do dia,
+     enquanto `V-0990` (2026-10-01T02:00Z) é **30/09 23:00 em Brasília** e
+     estava dentro.
+  2. **Duplicatas.** A sincronização automática reenvia vendas: `V-0992`,
+     `V-0994` e `V-0997` aparecem **duas vezes** em `data/vendas.json`, e cada
+     cópia era somada.
+  3. **Ticket médio divergente.** O divisor contava vendas **canceladas** e
+     **duplicadas**, enquanto o total vinha de um conjunto diferente — por isso
+     os dois números não fechavam entre si.
+
+  Cálculo feito na etapa de preparação: o código antigo produzia exatamente
+  R$ 4.501,00 para 2026-10-01, enquanto o valor correto é R$ 3.400,50.
+  **Correção (só em `src/relatorio.js`):** criei o helper
+  `vendasValidasDoDia(vendas, dia)`, que (a) mantém só `status === 'paga'`,
+  (b) converte o timestamp para a data no horário de Brasília (deslocamento
+  fixo de -3h) antes de comparar com o dia, e (c) elimina duplicatas pelo
+  `id` da venda (a primeira ocorrência vence). `totalDoDia` e `ticketMedio`
+  passaram a consumir **exatamente o mesmo conjunto** deduplicado — o ticket
+  médio agora é o total dividido pelo número de vendas válidas, e não por um
+  total de vendas diferente. Os nomes e as assinaturas de `totalDoDia(vendas,
+  dia)`, `ticketMedio(vendas, dia)` e `formatarBRL(valor)` foram preservados,
+  assim como o uso de `npm run relatorio -- 2026-10-01`.
+  **`data/vendas.json` não foi alterado** (é substituído pela sincronização).
 - **Como provei que funciona:**
-- **PR:**
+  - **Testes automatizados** em `test/relatorio.test.js`: o teste que já
+    existia foi **mantido intacto** e segue passando, e acrescentei 13 casos
+    novos — fuso de Brasília nos dois sentidos (venda que "entra" no dia em
+    Brasília e venda que "sai"), duplicatas da sincronização (inclusive
+    vendas distintas com o mesmo valor, que **não** podem ser fundidas),
+    canceladas e pendentes, ticket médio com o mesmo conjunto do total,
+    formatação em BRL e os números dos dados reais.
+    `npm test` → **2 arquivos, 15 testes, 15 passando**.
+  - **Execução do relatório real** — `npm run relatorio -- 2026-10-01`:
+    ```
+    Relatório de vendas — 2026-10-01
+    Total vendido: R$ 3.400,50
+    Ticket médio:  R$ 680,10
+    ```
+    Total = **R$ 3.400,50**, exatamente o valor conferido pelo financeiro
+    (ticket médio = 3.400,50 ÷ 5 vendas válidas = R$ 680,10).
+  - **Conferência venda a venda** (vendas pagas, deduplicadas, em Brasília):
+
+    | id | valor | criada_em (UTC) | em Brasília (UTC-3) | Entra em 01/10 |
+    |---|---|---|---|---|
+    | V-0991 | 1.000,00 | 2026-10-01T12:00Z | 01/10 09:00 | ✔ |
+    | V-0992 | 250,50 | 2026-10-01T15:30Z | 01/10 12:30 | ✔ |
+    | V-0994 | 1.200,00 | 2026-10-01T20:00Z | 01/10 17:00 | ✔ |
+    | V-0995 | 800,00 | 2026-10-02T01:30Z | 01/10 22:30 | ✔ |
+    | V-0996 | 150,00 | 2026-10-02T02:45Z | 01/10 23:45 | ✔ |
+    | | **3.400,50** | | | 5 vendas |
+
+    Fora do dia: `V-0988` e `V-0989` (30/09), `V-0990` (30/09 em Brasília),
+    `V-0997` e `V-0999` (02/10 em Brasília); canceladas fora da conta:
+    `V-0993` (400,00) e `V-0998` (75,90).
+- **PR:** a ser criada manualmente — branch `tarefa-2` → `main`, **aberta e sem
+  merge**. O link ainda não foi preenchido.
 
 ## Tarefa 3 — Cliente vendo dado de outra empresa
 
@@ -203,8 +256,9 @@ o Excel, que depende da lista final exibida na tela para fazer sentido).
   precisaria ser tratado na camada de aplicação.
 - **`data/vendas.json` tem registros duplicados** (V-0992, V-0994 e V-0997
   aparecem duas vezes), o que indica falha na sincronização automática que
-  gera o arquivo. Não é problema do código da Tarefa 2 (que vai deduplicar),
-  mas é a origem do dado e vale um alerta para quem mantém essa sincronização.
+  gera o arquivo. Isso **não** é problema do código da Tarefa 2 (que agora
+  deduplica por `id`), mas é a origem do dado e vale um alerta para quem
+  mantém essa sincronização.
 - **A tarefa 114 (`=SOMA(despesas) conferir na auditoria`) é um caso de
   injeção de fórmula no Excel** que já existe nos dados. Além de ser escapada
   na exportação (Tarefa 5), vale a pena gerar títulos assim de forma segura
@@ -217,14 +271,12 @@ o Excel, que depende da lista final exibida na tela para fazer sentido).
 
 ## O que ficou faltando / o que eu faria com mais tempo
 
-- As Tarefas 2, 4 e 5 ainda não foram implementadas — só foram
+- A **Tarefa 4** e a **Tarefa 5** ainda não foram implementadas — só foram
   **diagnosticadas** com profundidade na etapa de preparação (causa-raiz
   identificada em cada arquivo, cenários de teste e números esperados já
-  levantados, inclusive o cálculo do R$ 3.400,50 da Tarefa 2), mas o código
-  ainda não foi alterado para elas.
-- Com mais tempo eu faria, nesta ordem: Tarefa 2 (fuso de Brasília +
-  deduplicação), Tarefa 4 (API de feriados + coluna de SLA) e Tarefa 5 (CSV
-  com `;`, escape correto, BOM UTF-8 e botão na tela).
+  levantados), mas o código ainda não foi alterado para elas.
+- Com mais tempo eu faria, nesta ordem: Tarefa 4 (API de feriados + coluna de
+  SLA) e Tarefa 5 (CSV com `;`, escape correto, BOM UTF-8 e botão na tela).
 - Eu também centralizaria a regra de descendentes em um único lugar
   compartilhado entre o SQL e o frontend, em vez de repetir a regra em dois
   lugares, reduzindo o risco de as duas camadas divergirem.
