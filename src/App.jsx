@@ -2,6 +2,11 @@ import { useState } from 'react';
 import empresas from '../data/empresas.json';
 import tarefas from '../data/tarefas.json';
 import { listarTarefas } from './tarefas.js';
+import { prazoSLA, datasFeriados } from './prazo.js';
+import feriados2026 from '../data/feriados-2026.json';
+
+const DIAS_SLA = 3;
+const FERIADOS = datasFeriados(feriados2026.feriados);
 
 export function App() {
   const [empresaId, setEmpresaId] = useState(1);
@@ -27,11 +32,11 @@ export function App() {
       ) : (
         <table width="100%" cellPadding={6}>
           <thead>
-            <tr><th align="left">Data</th><th align="left">Tarefa</th><th align="left">Status</th></tr>
+            <tr><th align="left">Data</th><th align="left">Tarefa</th><th align="left">Status</th><th align="left">Prazo SLA (3 dias úteis)</th></tr>
           </thead>
           <tbody>
             {lista.map((t) => (
-              <tr key={t.id}><td>{t.criada_em}</td><td>{t.titulo}</td><td>{t.status}</td></tr>
+              <tr key={t.id}><td>{t.criada_em}</td><td>{t.titulo}</td><td>{t.status}</td><td>{prazoSLA(t.criada_em, DIAS_SLA, FERIADOS)}</td></tr>
             ))}
           </tbody>
         </table>
