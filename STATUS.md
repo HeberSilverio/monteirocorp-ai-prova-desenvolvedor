@@ -3,7 +3,7 @@
 > Preencha este arquivo na branch `main` antes de entregar.
 
 **Nome:** Heber Silverio
-**Tempo total gasto (aprox.):** 2h15m36s (registrado com Clockify)
+**Tempo total gasto (aprox.):** 2h40m55s (registrado com Clockify)
 
 ## Ordem em que trabalhei
 
@@ -22,9 +22,10 @@ tela e banco não discordem.
 
 Depois dela segui por impacto: **Tarefa 2** (número financeiro errado — R$ 4.501,00
 em vez de R$ 3.400,50), que já está **concluída e validada** na branch
-`tarefa-2`; depois seguem **Tarefa 4** (prazo em dias úteis, que depende de
-escolher e consultar a API de feriados) e por fim **Tarefa 5** (exportação para
-o Excel, que depende da lista final exibida na tela para fazer sentido).
+`tarefa-2`; depois a **Tarefa 4** (prazo em dias úteis — API de feriados e
+coluna de SLA), **também concluída e validada** na branch `tarefa-4`; e por
+fim **Tarefa 5** (exportação para o Excel, que depende da lista final exibida
+na tela para fazer sentido), que ainda não foi implementada.
 
 ## Ferramentas utilizadas
 
@@ -32,11 +33,12 @@ o Excel, que depende da lista final exibida na tela para fazer sentido).
 - **Ferramenta de IA:** Cline (extensão do VS Code).
 - **Modelo utilizado:** `cline:cline-free/nemotron-3.5-super-vl` e o modelo
   pago `kimi-k3` (Moonshot AI).
-- **Gerenciamento de tempo:** Clockify, com quatro entradas registradas:
+- **Gerenciamento de tempo:** Clockify, com cinco entradas registradas:
   - Prova prática - monteirocorp-ai (Preparação e diagnóstico) — 00:31:02
   - Prova prática - monteirocorp-ai (Tarefa 3 — Segurança) — 00:53:01
   - Prova prática - monteirocorp-ai (Tarefa 1 — Listagem) — 00:40:31
   - Prova prática - monteirocorp-ai (Tarefa 2 — Relatório) - 00:17:21
+  - Prova prática - monteirocorp-ai (Tarefa 4 — Prazos) - 00:25:19
 - Todo o histórico das conversas com a IA está sendo salvo na pasta `sessoes/`.
 
 ## Tarefa 1 — Tela de tarefas
@@ -90,7 +92,8 @@ o Excel, que depende da lista final exibida na tela para fazer sentido).
     HTTP 200) e, com o Grupo Aurora selecionado e o período padrão
     (01/09 a 31/10), a listagem passa de **0 linhas para 13**, sem nenhuma
     tarefa da Outra Empresa S.A. (ids 107 e 111).
-- **PR:** a ser criada — branch `tarefa-1` → `main`, **aberta e sem merge**.
+- **PR:** branch `tarefa-1` → `main`, **aberta e sem merge** —
+  https://github.com/HeberSilverio/monteirocorp-ai-prova-desenvolvedor/pull/2
 
 ## Tarefa 2 — Relatório de vendas
 
@@ -153,8 +156,8 @@ o Excel, que depende da lista final exibida na tela para fazer sentido).
     Fora do dia: `V-0988` e `V-0989` (30/09), `V-0990` (30/09 em Brasília),
     `V-0997` e `V-0999` (02/10 em Brasília); canceladas fora da conta:
     `V-0993` (400,00) e `V-0998` (75,90).
-- **PR:** a ser criada manualmente — branch `tarefa-2` → `main`, **aberta e sem
-  merge**. O link ainda não foi preenchido.
+- **PR:** branch `tarefa-2` → `main`, **aberta e sem merge** —
+  https://github.com/HeberSilverio/monteirocorp-ai-prova-desenvolvedor/pull/3
 
 ## Tarefa 3 — Cliente vendo dado de outra empresa
 
@@ -212,14 +215,86 @@ o Excel, que depende da lista final exibida na tela para fazer sentido).
     → permitido (empresa 4 é descendente da 2).
     `npm run db -- 5 "update/delete ... where id = 101"` → 0 linhas afetadas,
     e a tarefa 101 foi reconferida com o título original.
-- **PR:** a ser criada — branch `tarefa-3` → `main`, **aberta e sem merge**.
+- **PR:** branch `tarefa-3` → `main`, **aberta e sem merge** —
+  https://github.com/HeberSilverio/monteirocorp-ai-prova-desenvolvedor/pull/1
 
 ## Tarefa 4 — Prazo em dias úteis
 
-- **Situação:** não comecei
-- **Qual API de feriados usei e por quê:**
+- **Situação:** concluída e validada (branch `tarefa-4`)
+- **Qual era o problema:** `src/prazo.js` somava **dias corridos**
+  (`d.setDate(d.getDate() + dias)`), ignorando fins de semana e feriados. O
+  sintoma reportado era exatamente esse: tarefa criada na **sexta** com prazo
+  de **1 dia** vencendo no **sábado**. O enunciado pede prazo em **dias
+  úteis**, com contagem começando no **dia seguinte** à criação e feriados
+  **nacionais** obtidos de uma **API pública brasileira**.
+- **Qual API de feriados usei e por quê:** a **BrasilAPI**
+  (`https://brasilapi.com.br/api/feriados/v1/{ano}`) — é uma API pública
+  brasileira, mantida pela comunidade, que devolve os feriados nacionais do
+  ano em JSON (`date`, `name`, `type`). Escolhi essa porque já separa por
+  `type`, o que permite filtrar só os **nacionais** (descartando os
+  estaduais/locais) sem precisar escrever nomes ou datas à mão. As datas **não**
+  foram digitadas à mão: vêm do endpoint.
+- **Correção:**
+  - `src/prazo.js`: mantive o nome e a assinatura exatos de
+    `prazoSLA(criadaEm, dias, feriados)`. A contagem agora começa no **dia
+    seguinte** à criação; cada dia **útil** (segunda a sexta, **exceto**
+    feriados nacionais) consome um dia do prazo, e fins de semana e feriados
+    são pulados. Usei `Date` em UTC (`T00:00:00Z`) para o cálculo não depender
+    do fuso horário da máquina — o bug clássico de `toISOString()` com data
+    local. A função aceita feriados tanto como `['YYYY-MM-DD']` quanto como
+    objetos `{date}` (o formato que a API devolve); exportei também
+    `datasFeriados()` para extrair e ordenar as datas.
+  - `scripts/feriados.js` (novo) + `npm run feriados -- 2026`: consulta a
+    BrasilAPI, filtra `type === 'national'`, ordena por data e grava
+    `data/feriados-2026.json` (com `ano` e `fonte` para rastreabilidade).
+    Falha de rede, HTTP != 200 ou ano inválido são tratados com mensagem
+    clara e código de saída 1 — sem inventar dados.
+  - `src/App.jsx`: nova coluna **“Prazo SLA (3 dias úteis)”**, chamando
+    `prazoSLA(t.criada_em, 3, FERIADOS)`. Nada fora disso foi alterado na tela.
+  - `data/feriados-2026.json` (novo, versionado) — **14 feriados nacionais
+    de 2026** baixados da API.
 - **Como provei que funciona:**
-- **PR:**
+  - **Testes automatizados** em `test/prazo.test.js` (novo, 13 casos):
+    contagem a partir do dia seguinte, fim de semana pulado, feriado no
+    início e no meio do prazo, tarefa criada em fim de semana, lista de
+    feriados vazia, feriados no formato de objeto da API, prazo zero, virada
+    de ano (31/12 → 01/01 do ano seguinte) e independência de fuso horário.
+    `npm test` → **3 arquivos, 15 testes, 15 passando** (os 2 testes
+    preexistentes seguem passando, sem regressão).
+  - **Geração real dos feriados:** `npm run feriados -- 2026` →
+    ```
+    14 feriados nacionais de 2026 salvos em data/feriados-2026.json
+      2026-01-01  Confraternização mundial
+      2026-02-16  Carnaval
+      2026-02-17  Carnaval
+      2026-04-03  Sexta-feira Santa
+      2026-04-05  Páscoa
+      2026-04-21  Tiradentes
+      2026-05-01  Dia do trabalho
+      2026-06-04  Corpus Christi
+      2026-09-07  Independência do Brasil
+      2026-10-12  Nossa Senhora Aparecida
+      2026-11-02  Finados
+      2026-11-15  Proclamação da República
+      2026-11-20  Dia da consciência negra
+      2026-12-25  Natal
+    ```
+  - **Casos conferidos à mão** (regra: começa no dia seguinte, pula fim de
+    semana e feriado):
+    - criada **sexta 04/09** com 1 dia útil → **terça 08/09** (07/09 é
+      feriado da Independência, e sábado 05/09 não conta) — este é
+      precisamente o defeito do enunciado, corrigido: antes venceria no
+      sábado 05/09.
+    - criada **sexta 04/09** com 3 dias úteis → **10/09** (08, 09 e 10/09).
+    - criada **sexta 09/10** com 2 dias úteis → **14/10** (12/10 é feriado
+    de Nossa Senhora Aparecida, 10 e 11/10 são fim de semana).
+    - criada **sábado 12/09** com 1 dia útil → **segunda 14/09**.
+    - criada **quinta 31/12/2026** com 1 dia útil → **sexta 01/01/2027**.
+  - **Integração com a tela:** renderizei o componente `App` e conferi a
+    coluna nova e os prazos calculados — tarefa de 05/09 → `2026-09-10`;
+    30/09 → `2026-10-05`; 03/10 → `2026-10-07`; 10/10 → `2026-10-15`.
+- **PR:** branch `tarefa-4` → `main`, **aberta e sem merge** —
+  https://github.com/HeberSilverio/monteirocorp-ai-prova-desenvolvedor/pull/4
 
 ## Tarefa 5 — Exportar para o Excel
 
@@ -271,12 +346,13 @@ o Excel, que depende da lista final exibida na tela para fazer sentido).
 
 ## O que ficou faltando / o que eu faria com mais tempo
 
-- A **Tarefa 4** e a **Tarefa 5** ainda não foram implementadas — só foram
-  **diagnosticadas** com profundidade na etapa de preparação (causa-raiz
-  identificada em cada arquivo, cenários de teste e números esperados já
-  levantados), mas o código ainda não foi alterado para elas.
-- Com mais tempo eu faria, nesta ordem: Tarefa 4 (API de feriados + coluna de
-  SLA) e Tarefa 5 (CSV com `;`, escape correto, BOM UTF-8 e botão na tela).
+- A **Tarefa 4** foi implementada e validada (branch `tarefa-4`, PR aberta).
+  A **Tarefa 5** ainda **não** foi implementada — só foi **diagnosticada** com
+  profundidade na etapa de preparação (causa-raiz identificada em
+  `src/exportar.js`, cenários de teste e números esperados já levantados),
+  mas o código ainda não foi alterado para ela.
+- Com mais tempo eu faria, em seguida: a Tarefa 5 (CSV com `;`, escape correto,
+  BOM UTF-8 e botão na tela).
 - Eu também centralizaria a regra de descendentes em um único lugar
   compartilhado entre o SQL e o frontend, em vez de repetir a regra em dois
   lugares, reduzindo o risco de as duas camadas divergirem.
