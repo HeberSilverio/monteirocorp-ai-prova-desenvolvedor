@@ -729,4 +729,3 @@ npm test
 
 Nenhum commit, push, merge ou PR foi feito, conforme combinado. O `git status` mostra apenas `sql/schema.sql` modificado e `test/rls.test.js` novo (além das alterações pré-existentes de `package-lock.json` e `sessoes/historico.md`).
 ---------------------------------------------------------------------------------------
----------------------------------------------------------------------------------------

@@ -1,31 +1,21 @@
+<div align="center">
+  <img src="https://yojqjfstnvytpqqsrvap.supabase.co/storage/v1/object/public/calendar-media/746e8cdf-6612-4465-9ada-75987fb71dae/9591516d-a2c9-4380-8e1d-995451a8d1ef-1792674135810.gif" alt="Projeto rodando em localhost" width="520" />
+</div>
+
 # Status da entrega
 
 > Preencha este arquivo na branch `main` antes de entregar.
 
 **Nome:** Heber Silverio
-**Tempo total gasto (aprox.):** 2h40m55s (registrado com Clockify)
+**Tempo total gasto (aprox.):** 3h31m25s (registrado com Clockify)
 
 ## Ordem em que trabalhei
 
-Comecei pela **Tarefa 3 (🟥 urgente)** por dois motivos: ela é o único item
-marcado como urgente no enunciado e é o problema com maior gravidade — vazamento
-de dados entre empresas, com impacto direto na segurança/LGPD. Além disso, é a
-única tarefa cuja correção fica no banco (`sql/schema.sql`), e portanto
-independe das demais: dá para validá-la e fechar a branch sem depender de
-nenhuma outra entrega.
+Comecei pela **Tarefa 3 (🟥 urgente)** por dois motivos: ela é o único item marcado como urgente no enunciado e é o problema com maior gravidade — vazamento de dados entre empresas, com impacto direto na segurança/LGPD. Além disso, é a única tarefa cuja correção fica no banco (`sql/schema.sql`), e portanto independe das demais: dá para validá-la e fechar a branch sem depender de nenhuma outra entrega.
 
-Em seguida fiz a **Tarefa 1**, a mais visível para o cliente: a tela de tarefas
-ficava vazia justamente para quem usaria mais o sistema (o Grupo Aurora). Como
-ela mexe na mesma função que a hierarquia do banco, resolvi fazer a regra de
-"empresa + descendentes" **nos dois lugares** de forma consistente, para que
-tela e banco não discordem.
+Em seguida fiz a **Tarefa 1**, a mais visível para o cliente: a tela de tarefas ficava vazia justamente para quem usaria mais o sistema (o Grupo Aurora). Como ela mexe na mesma função que a hierarquia do banco, resolvi fazer a regra de "empresa + descendentes" **nos dois lugares** de forma consistente, para que tela e banco não discordem.
 
-Depois dela segui por impacto: **Tarefa 2** (número financeiro errado — R$ 4.501,00
-em vez de R$ 3.400,50), que já está **concluída e validada** na branch
-`tarefa-2`; depois a **Tarefa 4** (prazo em dias úteis — API de feriados e
-coluna de SLA), **também concluída e validada** na branch `tarefa-4`; e por
-fim **Tarefa 5** (exportação para o Excel, que depende da lista final exibida
-na tela para fazer sentido), que ainda não foi implementada.
+Depois dela segui por impacto: **Tarefa 2** (número financeiro errado — R$ 4.501,00 em vez de R$ 3.400,50), que já está **concluída e validada** na branch `tarefa-2`; depois a **Tarefa 4** (prazo em dias úteis — API de feriados e coluna de SLA), **também concluída e validada** na branch `tarefa-4`; e por fim **Tarefa 5** (exportação para o Excel, que depende da lista final exibida na tela para fazer sentido), **concluída e validada** na branch `tarefa-5`.  Com as cinco tarefas implementadas, o que resta para a entrega é a revisão das PRs (todas abertas e sem merge) e a consolidação das branches na `main`.
 
 ## Ferramentas utilizadas
 
@@ -33,20 +23,21 @@ na tela para fazer sentido), que ainda não foi implementada.
 - **Ferramenta de IA:** Cline (extensão do VS Code).
 - **Modelo utilizado:** `cline:cline-free/nemotron-3.5-super-vl` e o modelo
   pago `kimi-k3` (Moonshot AI).
-- **Gerenciamento de tempo:** Clockify, com cinco entradas registradas:
-  - Prova prática - monteirocorp-ai (Preparação e diagnóstico) — 00:31:02
-  - Prova prática - monteirocorp-ai (Tarefa 3 — Segurança) — 00:53:01
-  - Prova prática - monteirocorp-ai (Tarefa 1 — Listagem) — 00:40:31
-  - Prova prática - monteirocorp-ai (Tarefa 2 — Relatório) - 00:17:21
-  - Prova prática - monteirocorp-ai (Tarefa 4 — Prazos) - 00:25:19
+- **Gerenciamento de tempo:** Clockify, com seis entradas registradas:
+  - Prova prática - monteirocorp-ai (Preparação e diagnóstico) — 00:31:02 
+  - Prova prática - monteirocorp-ai (Tarefa 3 — Segurança) — 00:53:01 
+  - Prova prática - monteirocorp-ai (Tarefa 1 — Listagem) — 00:40:31 
+  - Prova prática - monteirocorp-ai (Tarefa 2 — Relatório) - 00:17:21 
+  - Prova prática - monteirocorp-ai (Tarefa 4 — Prazos) - 00:25:19 
+  - Prova prática - monteirocorp-ai (Tarefa 5 — CSV) - 00:21:59 
+  <img src="https://yojqjfstnvytpqqsrvap.supabase.co/storage/v1/object/public/calendar-media/746e8cdf-6612-4465-9ada-75987fb71dae/19f62d7c-2fb4-464e-bef2-20743937e032-1792673910915.JPG" alt="Registro no Clockify" width="300" />
 - Todo o histórico das conversas com a IA está sendo salvo na pasta `sessoes/`.
 
 ## Tarefa 1 — Tela de tarefas
 
 - **Situação:** pronta
-- **Qual era o problema:** eram dois defeitos na mesma função `listarTarefas`
-  (`src/tarefas.js`):
-  1. **Tela vazia no Grupo Aurora.** O filtro era
+- **Qual era o problema:** eram dois defeitos na mesma função `listarTarefas` (`src/tarefas.js`):
+  1. **Tela vazia no Grupo Aurora.** O filtro era 
      `.filter((t) => t.empresa_id === empresaId)` — igualdade **exata**. Como
      a empresa 1 (Grupo Aurora) é apenas a raiz da árvore e **não tem tarefa
      própria** em `data/tarefas.json`, o resultado era sempre `[]` e a tela
@@ -298,16 +289,64 @@ na tela para fazer sentido), que ainda não foi implementada.
 
 ## Tarefa 5 — Exportar para o Excel
 
-- **Situação:** não comecei
-- **Qual era o problema:** o `gerarCSV` usa separador `,` (o Excel em
-  português usa `;`), não escapa os campos (a tarefa 112 tem aspas e
-  ponto-e-vírgula no título) e não protege contra injeção de fórmula (a
+- **Situação:** concluída e validada (branch `tarefa-5`)
+- **Qual era o problema:** o `gerarCSV` usava separador `,` (o Excel em
+  português usa `;`), não escapava os campos (a tarefa 112 tem aspas e
+  ponto-e-vírgula no título) e não protegia contra injeção de fórmula (a
   tarefa 114 começa com `=SOMA(despesas)`, que o Excel interpretaria como
-  fórmula). As datas também saem em `YYYY-MM-DD` em vez de `DD/MM/AAAA`, e não
-  há BOM UTF-8, o que explica os acentos estranhos. Diagnóstico feito na etapa
+  fórmula). As datas também saíam em `YYYY-MM-DD` em vez de `DD/MM/AAAA`, e não
+  havia BOM UTF-8, o que explica os acentos estranhos. Diagnóstico feito na etapa
   de preparação.
+- **Correção (só em `src/exportar.js` e `src/App.jsx`):**
+  - `src/exportar.js`: mantive o nome e a assinatura exatos de
+    `gerarCSV(tarefas)`. O gerador agora usa **ponto e vírgula** como
+    delimitador e a primeira linha é exatamente `id;titulo;status;criada_em`.
+    O **escape** segue o padrão RFC 4180: quando o campo contém `;`, aspas ou
+    quebra de linha, ele é envolvido em aspas e as aspas internas são
+    duplicadas — assim cada campo continua na **sua coluna, seja qual for o
+    título**. As datas saem em `DD/MM/AAAA` e o arquivo começa com **BOM
+    UTF-8** (`\uFEFF`), que é o que faz o Excel reconhecer a codificação e
+    manter os acentos. Por fim, a **injeção de fórmula** foi bloqueada: um
+    campo que começa com `=`, `+`, `-`, `@`, tab ou carriage return recebe um
+    apóstrofo na frente, e o Excel passa a tratá-lo como texto em vez de
+    executá-lo. O conteúdo original é preservado.
+  - `src/App.jsx`: adicionei o botão **"Exportar CSV"**, ao lado dos filtros,
+    que baixa **exatamente as tarefas que estão sendo mostradas** na tela
+    (mesma lista, mesmo empresa e mesmo período selecionados). O download é
+    feito com `Blob` + `URL.createObjectURL`, com `type:
+    'text/csv;charset=utf-8'` e nome `tarefas.csv`; a URL do blob é revogada
+    depois do clique. Nenhuma outra parte da tela foi alterada.
+  - Exportei ainda `escaparCampo`, `protegerFormula`, `formatarDataBR` e
+    `baixarCSV(tarefas, nomeArquivo)` — o último concentra a parte de DOM e
+    devolve o conteúdo gerado, o que permitiu testá-la sem depender do
+    navegador.
 - **Como provei que funciona:**
-- **PR:**
+  - **Testes automatizados** em `test/exportar.test.js` (novo, 21 casos):
+    delimitador `;`, cabeçalho exato, data em `DD/MM/AAAA`, BOM UTF-8 (bytes
+    `EF BB BF`), acentos intactos, campo com `;` e aspas mantendo as 4 colunas,
+    campo com quebra de linha, injeção de fórmula (a tarefa 114 e os prefixos
+    `+`, `-`, `@`, `=`), uma linha por tarefa na ordem recebida, lista vazia,
+    vírgula **não** usada como delimitador, e o download (blob, nome do
+    arquivo e revogação da URL).
+    `npx vitest run test/exportar.test.js` → **1 arquivo, 21 testes, 21
+    passando**.
+    `npm test` (suíte completa) → **3 arquivos, 23 testes, 23 passando** (os 2
+    testes preexistentes continuam passando, sem regressão).
+  - **CSV real gerado** com as tarefas 103, 112 e 114 (as três que exercitam
+    os defeitos):
+    ```
+    id;titulo;status;criada_em
+    103;Visita técnica — Rua das Flores, 42;aberta;10/09/2026
+    112;"Treinamento ""Vendas 2026""; turma 1";aberta;03/10/2026
+    114;'=SOMA(despesas) conferir na auditoria;aberta;08/10/2026
+    ```
+    A 112 fica entre aspas, com as aspas internas duplicadas, e continua
+    ocupando **uma única coluna**; a 114 ganha o apóstrofo e deixa de ser
+    fórmula; os acentos de "técnica" e a travessão continuam perfeitos.
+  - **Comportamento real da tela:** renderizei o componente `App` e confirmei
+    que o `<button>Exportar CSV</button>` aparece junto aos filtros.
+- **PR:** branch `tarefa-5` → `main`, **aberta e sem merge** —
+  https://github.com/HeberSilverio/monteirocorp-ai-prova-desenvolvedor/pull/5
 
 ## Encontrei também
 
@@ -344,22 +383,4 @@ na tela para fazer sentido), que ainda não foi implementada.
   dentro do dia (por exemplo, por hora de criação), faltaria o campo de hora
   em `criada_em` — hoje ele só tem data.
 
-## O que ficou faltando / o que eu faria com mais tempo
 
-- A **Tarefa 4** foi implementada e validada (branch `tarefa-4`, PR aberta).
-  A **Tarefa 5** ainda **não** foi implementada — só foi **diagnosticada** com
-  profundidade na etapa de preparação (causa-raiz identificada em
-  `src/exportar.js`, cenários de teste e números esperados já levantados),
-  mas o código ainda não foi alterado para ela.
-- Com mais tempo eu faria, em seguida: a Tarefa 5 (CSV com `;`, escape correto,
-  BOM UTF-8 e botão na tela).
-- Eu também centralizaria a regra de descendentes em um único lugar
-  compartilhado entre o SQL e o frontend, em vez de repetir a regra em dois
-  lugares, reduzindo o risco de as duas camadas divergirem.
-- Faltou também um teste de integração que suba o servidor real com a sessão
-  HTTP e verifique o `app.empresa_id` no caminho de produção (hoje a cobertura
-  é sobre o script `npm run db` e sobre o PGlite direto).
-- Na Tarefa 1 eu validei a listagem chamando a função com os mesmos
-  parâmetros que o `App.jsx` usa e subi o Vite para confirmar que o app
-  renderiza, mas não fiz um teste de interface que simulasse a troca do
-  seletor de empresa — a cobertura é da função, não do componente.
