@@ -2,6 +2,7 @@ import { useState } from 'react';
 import empresas from '../data/empresas.json';
 import tarefas from '../data/tarefas.json';
 import { listarTarefas } from './tarefas.js';
+import { baixarCSV } from './exportar.js';
 
 export function App() {
   const [empresaId, setEmpresaId] = useState(1);
@@ -10,10 +11,14 @@ export function App() {
 
   const lista = listarTarefas({ tarefas, empresas, empresaId, de, ate });
 
+  function exportarCSV() {
+    baixarCSV(lista);
+  }
+
   return (
     <main style={{ fontFamily: 'system-ui', maxWidth: 720, margin: '32px auto', padding: '0 16px' }}>
       <h1>Tarefas</h1>
-      <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 16 }}>
+      <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 16, alignItems: 'center' }}>
         <select value={empresaId} onChange={(e) => setEmpresaId(Number(e.target.value))}>
           {empresas.map((e) => (
             <option key={e.id} value={e.id}>{e.nome}</option>
@@ -21,6 +26,7 @@ export function App() {
         </select>
         <label>De <input type="date" value={de} onChange={(e) => setDe(e.target.value)} /></label>
         <label>Até <input type="date" value={ate} onChange={(e) => setAte(e.target.value)} /></label>
+        <button type="button" onClick={exportarCSV}>Exportar CSV</button>
       </div>
       {lista.length === 0 ? (
         <p>Nenhuma tarefa no período.</p>
